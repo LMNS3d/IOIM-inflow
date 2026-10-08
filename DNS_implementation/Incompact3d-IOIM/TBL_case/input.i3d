@@ -1,0 +1,175 @@
+! IOIM-S turbulent boundary-layer example input.
+! Copyright (c) 2026, Anjia Ying and Lin Fu.
+! Used with a derivative of Xcompact3d (BSD 3-Clause).
+
+! -*- mode: f90 -*-
+
+!===================
+&BasicParam
+!===================
+
+! Flow type (1=Lock-exchange, 2=TGV, 3=Channel, 4=Periodic hill, 5=Cylinder, 6=dbg-schemes, 9=Turbulent-Boundary-Layer)
+itype = 9
+
+! Domain decomposition
+p_row=0               ! Row partition
+p_col=0               ! Column partition
+
+! Mesh
+nx=2401                ! X-direction nodes
+ny=301                ! Y-direction nodes
+nz=240                 ! Z-direction nodes
+istret = 3            ! y mesh refinement (0:no, 1:center, 2:both sides, 3:bottom)
+beta = 1.55            ! Refinement parameter (beta)
+
+! Domain
+xlx = 545.60             ! Lx (Size of the box in x-direction)
+yly = 50.             ! Ly (Size of the box in y-direction)
+zlz = 27.28              ! Lz (Size of the box in z-direction)
+
+! Flow parameters
+re  = 1000.           ! nu=1/re (Kinematic Viscosity)
+
+! Time stepping
+dt = 0.005             ! Time step
+ifirst = 1            ! First iteration
+ilast = 600000         ! Last iteration
+
+! Enable modelling tools
+ilesmod=0             ! if 0 then DNS
+numscalar = 0         ! How many scalars? (Set to zero to disable scalars)
+iibm=0                ! Flag for immersed boundary method
+
+! Boundary and initial conditions
+iin = 4               ! Inflow conditions (1: classic, 2: turbinit, 3: Read inflow, 4: Recycling-Rescaling)
+u1  = 1.              ! u1 (max velocity) (for inflow condition)
+u2  = 1.              ! u2 (min velocity) (for inflow condition)
+init_noise = 0.05      ! If nonzero, add STREAmS 3% random seed inside the local boundary layer (irestart=0, iin=4)
+inflow_noise = 0.0    ! Turbulence intensity (1=100%) !! Inflow condition
+
+nclx1 = 2
+nclxn = 2
+ncly1 = 2
+nclyn = 2
+nclz1 = 0
+nclzn = 0
+/End
+
+!====================
+&NumOptions
+!====================
+
+! Spatial derivatives
+ifirstder = 4         ! (1->2nd central, 2->4th central, 3->4th compact, 4-> 6th compact)
+isecondder = 5        ! (1->2nd central, 2->4th central, 3->4th compact, 4-> 6th compact, 5->hyperviscous 6th)
+ipinter = 2           ! interpolation scheme (1: classic, 2: optimized, 3: optimized agressive)
+
+! Time scheme
+iimplicit = 2
+itimescheme = 3
+
+! Dissipation control
+nu0nu = 4.0             ! Ratio between hyperviscosity/viscosity at nu
+cnu = 0.44               ! Ratio between hypervisvosity at k_m=2/3pi and k_c= pi
+
+! Recycling-rescaling settings
+
+delta_in  = 5.23        ! Boundary-layer thickness at the inlet
+
+method_rr = 1           ! 1: IOIM-S; 2: LWS-S; 3: LWS-R
+x_recyc   = 209.2        ! Corresponding to 40delta_in
+
+! The temporal length and step for the IOIM approach
+
+n_sp = 98			     ! Time interval for sampling (corresponding to dt_sp^+ = (n_sp*dt)^+ = 1)
+
+N_I = 200              ! Samplings inside an IOIM block (corresponding to a time duration of N_I*n_sp*dt*U_infty/delta_{e,re} >= 10)
+N_Gamma = 300          ! Length of the recycling pool. N_Gamma > N_I and (N_Gamma-N_I/2)*n_sp*dt*U_infty/delta_{e,re} >= 10
+N_Upsilon = 2000       ! Used to define the largest updating rate for the IOIM transfer function. N_averaging >= 10*N_I.
+
+! Window width for filtering the inflow velocity in time
+width_interp = 20
+
+! Impose spanwise shift
+i_zshift = 1
+
+! Sponge region settings
+x_sponge = 530.         ! Starting location of the sponge region in X axis (recommended value: xlx-10). If negative, then no sponge region.
+y_sponge = -1.          ! Starting location of the sponge region in Y axis (recommended value: 0.75*yly). If negative, then no sponge region.
+in_xsponge = 0.1     ! Intensity of the sponge region (recommended value: 0.0001)
+in_ysponge = 0.
+
+/End
+
+!=================
+&InOutParam
+!=================
+
+! Basic I/O
+irestart = 1         ! Read initial flow field ?
+icheckpoint =  3000 ! Frequency for writing backup file
+ioutput =  3000     ! Frequency for visualization
+ilist =  60         ! Frequency for write to screen 
+nvisu = 1            ! Size for visualisation collection
+ioutflow=0           ! Outflow flag
+ntimesteps=8000     ! Number of planes saved in each file
+
+/End
+
+!=================
+&Statistics
+!=================
+
+wrotation = 0.      ! rotation speed to trigger turbulence
+spinup_time = 0       ! number of time steps with a rotation to trigger turbulence
+nstat = 1             ! Size arrays for statistic collection
+initstat = 300000      ! Time steps after which statistics are collected 
+
+/End
+
+!########################
+! OPTIONAL PARAMETERS
+!#######################
+
+!================
+&ScalarParam
+!================
+
+Sc(1) = 1.0           ! Schmidt number
+
+nclxS1 = 2
+nclxSn = 2
+nclyS1 = 2
+nclySn = 2
+nclzS1 = 0
+nclzSn = 0
+
+/End
+
+!================
+&LESModel
+!================
+
+jles = 1              ! LES Model (1: Phys Smag, 2: Phys WALE, 3: Phys dyn. Smag, 4: iSVV, 5: dyn SEV)
+smagcst = 0.14        ! Smagorinsky constant
+SmagWallDamp = 1      ! 1: Mason and Thomson Damping function, otherwise OFF
+walecst = 0.5         ! WALES Model Coefficient
+iconserv = 0          ! Formulation SGS divergence (0: non conservative, 1: conservative)
+
+/End
+
+
+!================
+&Tripping
+!================
+itrip=4               !1 to activate the tripping for TBL, 0 otherwise for LBL 
+A_tr = 0.356625       !to be use with care, value is mesh-dependent
+!xs_tr_tbl=1.402033       
+!ys_tr_tbl=0.350508       
+!ts_tr_tbl=1.402033
+!x0_tr_tbl=3.505082
+
+/End
+
+&CASE
+/End
